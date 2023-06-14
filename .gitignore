@@ -1,9 +1,10 @@
 .cache
 figures
 # intermediate_datafiles
-ch*
-crowdsignals_*
-start_*
+ch*.py
+crowdsignals_*.py
+start_docker.bat
+start_docker.sh
 pyflux_wheel
 util
-__pycache__/
+**/__pycache__/
