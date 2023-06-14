@@ -1,3 +1,8 @@
 .cache
 figures
-intermediate_datafiles
+# intermediate_datafiles
+ch*
+crowdsignals_*
+start_*
+pyflux_wheel
+util
