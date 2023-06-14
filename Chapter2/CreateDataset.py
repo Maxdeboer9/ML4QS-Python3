@@ -43,20 +43,23 @@ class CreateDataset:
     # Add numerical data, we assume timestamps in the form of nanoseconds from the epoch
     def add_numerical_dataset(self, file, timestamp_col, value_cols, aggregation='avg', prefix=''):
         print(f'Reading data from {file}')
-        dataset = pd.read_csv(self.base_dir / file, skipinitialspace=True)
-
+        dataset = pd.read_csv(self.base_dir / file, skipinitialspace=True, sep=',')
+        print("Testing!")
         # Convert timestamps to dates
         dataset[timestamp_col] = pd.to_datetime(dataset[timestamp_col])
-
+        print("Something takes forever!")
         # Create a table based on the times found in the dataset
         if self.data_table is None:
             self.create_dataset(min(dataset[timestamp_col]), max(dataset[timestamp_col]), value_cols, prefix)
         else:
             for col in value_cols:
                 self.data_table[str(prefix) + str(col)] = np.nan
-
+        print("Maybe this?")
         # Over all rows in the new table
+        m = len(self.data_table.index)
         for i in range(0, len(self.data_table.index)):
+            if i % 1000 == 0:
+                print(i, m)
             # Select the relevant measurements.
             relevant_rows = dataset[
                 (dataset[timestamp_col] >= self.data_table.index[i]) &
@@ -72,6 +75,7 @@ class CreateDataset:
                         raise ValueError(f"Unknown aggregation {aggregation}")
                 else:
                     self.data_table.loc[self.data_table.index[i], str(prefix)+str(col)] = np.nan
+        print("Last possibility!")
 
     # Remove undesired value from the names.
     def clean_name(self, name):

@@ -92,10 +92,11 @@ class DistanceBasedOutlierDetection:
     def simple_distance_based(self, data_table, cols, d_function, dmin, fmin):
         print('Calculating simple distance-based criterion.')
 
+        not_nan_values = data_table[cols[0]].notnull()
+        print(not_nan_values)
         # Normalize the dataset first.
         new_data_table = util.normalize_dataset(
             data_table.dropna(axis=0, subset=cols), cols)
-
         # Create the distance table first between all instances:
         self.distances = self.distance_table(new_data_table, cols, d_function)
 
@@ -107,12 +108,14 @@ class DistanceBasedOutlierDetection:
             ) if col_val > dmin]))/len(new_data_table.index))
             # Mark as an outlier if beyond the minimum frequency.
             mask.append(frac > fmin)
-        if data_table.get('simple_dist_outlier') is None:
-            data_mask = pd.DataFrame(mask, index=new_data_table.index, columns=[
-                                     'simple_dist_outlier'])
-            data_table = pd.concat([data_table, data_mask], axis=1)
-        else:
-            data_table['simple_dist_outlier'] = pd.Series(mask, index=new_data_table.index)
+        # if data_table.get('simple_dist_outlier') is None:
+        #     data_mask = pd.DataFrame(mask, index=new_data_table.index, columns=[
+        #                              'simple_dist_outlier'])
+        #     data_table = pd.concat([data_table, data_mask], axis=1)
+        # else:
+        data_table[cols[0] + '_simple_dist_outlier'] = False
+        data_table.loc[not_nan_values == True, cols[0] + '_simple_dist_outlier'] = mask
+        # data_table[cols[0] + '_simple_dist_outlier'] = pd.Series(mask, index=new_data_table.index)
         del self.distances
         return data_table
 
@@ -135,12 +138,12 @@ class DistanceBasedOutlierDetection:
         for i in range(0, len(new_data_table.index)):
             if i % 100 == 0: print(f'Completed {i} steps for LOF.')
             outlier_factor.append(self.local_outlier_factor_instance(i, k))
-        if data_table.get('lof') is None:
-            data_outlier_probs = pd.DataFrame(
-                outlier_factor, index=new_data_table.index, columns=['lof'])
-            data_table = pd.concat([data_table, data_outlier_probs], axis=1)
-        else:
-            data_table['lof'] = pd.Series(outlier_factor, index=new_data_table.index)
+        # if data_table.get('lof') is None:
+        #     data_outlier_probs = pd.DataFrame(
+        #         outlier_factor, index=new_data_table.index, columns=['lof'])
+        #     data_table = pd.concat([data_table, data_outlier_probs], axis=1)
+        # else:
+        data_table[cols[0] + '_lof'] = pd.Series(outlier_factor, index=new_data_table.index)
         del self.distances
         return data_table
 

@@ -135,6 +135,7 @@ class VisualizeDataset:
         plt.show()
 
     def plot_dataset_boxplot(self, dataset, cols):
+        print(dataset.dtypes)
         plt.Figure(); dataset[cols].plot.box()
         plt.ylim([-30,30])
         self.save(plt)
