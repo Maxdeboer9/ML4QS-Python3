@@ -6,6 +6,5 @@ crowdsignals_*.py
 start_docker.bat
 start_docker.sh
 pyflux_wheel
-util
 **/__pycache__/
 datasets
