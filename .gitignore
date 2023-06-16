@@ -8,3 +8,4 @@ start_docker.sh
 pyflux_wheel
 **/__pycache__/
 datasets
+.venv
