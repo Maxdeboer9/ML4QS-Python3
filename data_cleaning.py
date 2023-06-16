@@ -42,8 +42,8 @@ def main():
     # Step 1: Let us see whether we have some outliers we would prefer to remove.
 
     # Determine the columns we want to experiment on.
-    # outlier_columns = ['acc_x', 'acc_y', 'acc_z', 'gyr_x', 'gyr_y', 'gyr_z', 'hr_bpm', 'mag_x', 'mag_y', 'mag_z']
-    outlier_columns = ['hr_bpm']
+    # outlier_columns = ['acc_x', 'acc_y', 'acc_z', 'gyr_x', 'gyr_y', 'gyr_z', 'hr_bpm', 'mag_x', 'mag_y', 'mag_z', 'loc_speed']
+    outlier_columns = ['hr_bpm', 'loc_speed']
     # Create the outlier classes.
     OutlierDistr = DistributionBasedOutlierDetection()
     OutlierDist = DistanceBasedOutlierDetection()
@@ -101,54 +101,58 @@ def main():
     elif FLAGS.mode == 'final':
 
         # We use Chauvenet's criterion for the final version and apply it to all but the label data...
-        for col in [c for c in dataset.columns if not 'label' in c]:
+        # for col in [c for c in dataset.columns if not 'label' in c]:
 
-            print(f'Measurement is now: {col}')
-            dataset = OutlierDistr.chauvenet(dataset, col, FLAGS.C)
-            dataset.loc[dataset[f'{col}_outlier'] == True, col] = np.nan
-            del dataset[col + '_outlier']
+            # print(f'Measurement is now: {col}')
+            # dataset = OutlierDistr.chauvenet(dataset, col, FLAGS.C)
+            # dataset.loc[dataset[f'{col}_outlier'] == True, col] = np.nan
+            # del dataset[col + '_outlier']
+        print([c for c in dataset.columns if not 'label' in c])
+        for col in [c for c in dataset.columns if not 'label' in c]:
+            try:
+                dataset = OutlierDist.local_outlier_factor(
+                    dataset, [col], 'euclidean', FLAGS.K)
+                DataViz.plot_dataset(dataset, [col, col + '_lof'], [
+                                     'exact', 'exact'], ['line', 'points'])
+                dataset.loc[dataset[col + '_lof'] > LOF_CONSTANT, col] = np.nan
+                dataset = dataset.drop(col + '_lof', axis=1)
+            except MemoryError as e:
+                print('Not enough memory available for lof...')
+                print('Skipping.')
+
+
+
 
     # for column in outlier_columns:
     #     if
-    dataset.to_csv(DATA_PATH / ('temp_' + RESULT_FNAME))
-    print(dataset[10:21])
+    # dataset.to_csv(DATA_PATH / ('temp_' + RESULT_FNAME))
     # Replacing the outliers with NaN values so we can impute them later
-    if FLAGS.mode == 'distance':
-        for column in outlier_columns:
-            dataset.loc[dataset[column + '_simple_dist_outlier'] == True, column] = np.nan
-            dataset = dataset.drop(column + '_simple_dist_outlier', axis=1)
-    if FLAGS.mode == 'LOF':
-        for column in outlier_columns:
-            dataset.loc[dataset[column + '_lof'] > LOF_CONSTANT, column] = np.nan
-            dataset = dataset.drop(column + '_lof', axis=1)
+    # if FLAGS.mode == 'distance':
+    #     for column in outlier_columns:
+    #         dataset.loc[dataset[column + '_simple_dist_outlier'] == True, column] = np.nan
+    #         dataset = dataset.drop(column + '_simple_dist_outlier', axis=1)
+    # if FLAGS.mode == 'LOF':
+    #     for column in outlier_columns:
+    #         dataset.loc[dataset[column + '_lof'] > LOF_CONSTANT, column] = np.nan
+    #         dataset = dataset.drop(column + '_lof', axis=1)
 
     ImputeFunctions = ImputationMissingValues()
-    print(dataset[10:21])
-    dataset = ImputeFunctions.impute_interpolate(dataset, ['acc_x', 'acc_y', 'acc_z', 'gyr_x', 'gyr_y', 'gyr_z', 'hr_bpm', 'mag_x', 'mag_y', 'mag_z'])
-    print(dataset[10:21])
+    dataset = ImputeFunctions.impute_interpolate(dataset, ['acc_x', 'acc_y', 'acc_z', 'gyr_x', 'gyr_y', 'gyr_z', 'hr_bpm', 'mag_x', 'mag_y', 'mag_z', 'loc_speed'])
     dataset.to_csv(DATA_PATH / RESULT_FNAME)
-    # Plot the data
-    # DataViz = VisualizeDataset(__file__)
-
-    # Boxplot
-    # DataViz.plot_dataset_boxplot(dataset, ['acc_phone_x','acc_phone_y','acc_phone_z','acc_watch_x','acc_watch_y','acc_watch_z'])
-    # DataViz.plot_dataset_boxplot(dataset, ['acc_x','acc_y','acc_z'])
-    # DataViz.plot_dataset_boxplot(dataset, ['value'])
 
     # Plot all data
     # DataViz.plot_dataset(dataset, ['acc_', 'gyr_', 'hr_watch_rate', 'light_phone_lux', 'mag_', 'press_phone_', 'label'],
     #                             ['like', 'like', 'like', 'like', 'like', 'like', 'like','like'],
     #                             ['line', 'line', 'line', 'line', 'line', 'line', 'points', 'points'])
 
-    DataViz.plot_dataset(dataset, ['acc_', 'gyr_', 'hr_', 'mag_', 'label'],
-                                ['like', 'like', 'like', 'like', 'like'],
-                                ['line', 'line', 'line', 'line', 'points'])
+    DataViz.plot_dataset(dataset, ['acc_', 'gyr_', 'hr_', 'mag_', 'loc_', 'label'],
+                                ['like', 'like', 'like', 'like', 'like', 'like'],
+                                ['line', 'line', 'line', 'line', 'line', 'points'])
 
 
 if __name__ == '__main__':
     # Command line arguments
     parser = argparse.ArgumentParser()
-
 
     parser.add_argument('--mode', type=str, default='final',
                         help="Select what version to run: LOF, distance, mixture, chauvenet or final \
@@ -171,7 +175,5 @@ if __name__ == '__main__':
                         help="Simple distance based:  fmin is ... ")
 
     FLAGS, unparsed = parser.parse_known_args()
-    print(FLAGS)
-    print(unparsed)
 
     main()

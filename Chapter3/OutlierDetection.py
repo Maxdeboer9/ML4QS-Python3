@@ -138,11 +138,7 @@ class DistanceBasedOutlierDetection:
         for i in range(0, len(new_data_table.index)):
             if i % 100 == 0: print(f'Completed {i} steps for LOF.')
             outlier_factor.append(self.local_outlier_factor_instance(i, k))
-        # if data_table.get('lof') is None:
-        #     data_outlier_probs = pd.DataFrame(
-        #         outlier_factor, index=new_data_table.index, columns=['lof'])
-        #     data_table = pd.concat([data_table, data_outlier_probs], axis=1)
-        # else:
+        # Add column name with _lof behind it, containing the LOF score. 
         data_table[cols[0] + '_lof'] = pd.Series(outlier_factor, index=new_data_table.index)
         del self.distances
         return data_table

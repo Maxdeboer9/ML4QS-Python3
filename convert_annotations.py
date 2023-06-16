@@ -4,7 +4,7 @@ import numpy as np
 
 def main():
     # pd.set_option('display.float_format', lambda x: f'{x:.3f}')
-    directory = './SensorLogger/SensorLogger/'
+    directory = './SensorLogger/'
     filename = 'Annotation.csv'
     # l = './HealthHeartRate_2023-06-160_11-01-39_SimpleHealthExportCSV/HealthHeartRate_2023-06-160_11-01-39_SimpleHealthExportCSV/HKQuantityTypeIdentifierHeartRateSeries_2023-06-160_11-01-42_SimpleHealthExportCSV.csv'
     df= pd.read_csv(directory + filename)
