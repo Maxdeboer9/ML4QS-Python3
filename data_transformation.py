@@ -110,7 +110,7 @@ def main():
 
 
         selected_predictor_cols = [c for c in dataset.columns if (
-            not ('label' in c)) and (not (c == 'hr_watch_rate'))]
+            not ('label' in c)) and (not (c == 'hr_bpm'))]
         pc_values = PCA.determine_pc_explained_variance(
             dataset, selected_predictor_cols)
 
@@ -154,9 +154,9 @@ def main():
             dataset[col] = dataset[col + '_lowpass']
             del dataset[col + '_lowpass']
 
-        # We used the optimal found parameter n_pcs = 7, to apply PCA to the final dataset
+        # We used the optimal found parameter n_pcs = 4, to apply PCA to the final dataset
 
-        selected_predictor_cols = [c for c in dataset.columns if (not ('label' in c)) and (not (c == 'hr_watch_rate'))]
+        selected_predictor_cols = [c for c in dataset.columns if (not ('label' in c)) and (not (c == 'hr_bpm'))]
 
         n_pcs = 4
 
