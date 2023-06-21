@@ -204,6 +204,51 @@ class VisualizeDataset:
     # by means of different types of points. We assume that three data columns are clustered
     # that do not include the label. We assume the labels to be represented by 1 or more binary
     # columns.
+    def plot_clusters_2d(self, data_table, data_cols, cluster_col, label_cols):
+
+        color_index = 0
+        point_displays = ['+', 'x', '*', 'd', 'o', 's', '<', '>']
+
+        # Determine the number of clusters:
+        clusters = data_table[cluster_col].unique()
+        labels = []
+
+        # Get the possible labels, assuming 1 or more label columns with binary values.
+        for i in range(0, len(label_cols)):
+            labels.extend([name for name in list(data_table.columns) if label_cols[i] == name[0:len(label_cols[i])]])
+
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        handles = []
+
+        # Plot clusters individually with a certain color.
+        for cluster in clusters:
+            marker_index = 0
+            # And make sure the points of a label receive the right marker type.
+            for label in labels:
+                rows = data_table.loc[(data_table[cluster_col] == cluster) & (data_table[label] > 0)]
+                # Now we come to the assumption that there are three data_cols specified:
+                if not len(data_cols) == 2:
+                    return
+                plot_color = self.colors[color_index%len(self.colors)]
+                plot_marker = point_displays[marker_index%len(point_displays)]
+                pt = ax.scatter(rows[data_cols[0]], rows[data_cols[1]], c=plot_color, marker=plot_marker)
+                if color_index == 0:
+                    handles.append(pt)
+                ax.set_xlabel(data_cols[0])
+                ax.set_ylabel(data_cols[1])
+                marker_index += 1
+            color_index += 1
+
+        plt.legend(handles, labels, fontsize='xx-small', numpoints=1)
+        self.save(plt)
+        plt.show()
+
+    # This function plots clusters that result from the application of a clustering algorithm
+    # and also shows the class label of points. Clusters are displayed via colors, classes
+    # by means of different types of points. We assume that three data columns are clustered
+    # that do not include the label. We assume the labels to be represented by 1 or more binary
+    # columns.
     def plot_clusters_3d(self, data_table, data_cols, cluster_col, label_cols):
 
         color_index = 0

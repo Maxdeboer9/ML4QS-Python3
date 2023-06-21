@@ -42,10 +42,12 @@ def main():
         # Do some initial runs to determine the right number for k
 
         print('===== kmeans clustering =====')
+        # values = ['acc_x', 'acc_y', 'acc_z']
+        values = ['hr_bpm', 'loc_speed']
         for k in k_values:
             print(f'k = {k}')
             dataset_cluster = clusteringNH.k_means_over_instances(copy.deepcopy(
-                dataset), ['acc_x', 'acc_y', 'acc_z'], k, 'default', 20, 10)
+                dataset), values, k, 'default', 20, 10)
             silhouette_score = dataset_cluster['silhouette'].mean()
             print(f'silhouette = {silhouette_score}')
             silhouette_values.append(silhouette_score)
@@ -59,13 +61,13 @@ def main():
         print(f'Highest K-Means silhouette score: k = {k}')
         print('Use this value of k to run the --mode=final --k=?')
 
-        dataset_kmed = clusteringNH.k_means_over_instances(copy.deepcopy(dataset), [
-                                                             'acc_x', 'acc_y', 'acc_z'], k, 'default', 20, n_inits=50)
-        DataViz.plot_clusters_3d(dataset_kmed, [
-                                 'acc_x', 'acc_y', 'acc_z'], 'cluster', ['label'])
+        dataset_kmed = clusteringNH.k_means_over_instances(copy.deepcopy(dataset), values, k, 'default', 20, n_inits=50)
+        if len(values) == 2:
+            DataViz.plot_clusters_3d(dataset_kmed, values, 'cluster', ['label'])
+        else:
+            DataViz.plot_clusters_3d(dataset_kmed, values, 'cluster', ['label'])
         DataViz.plot_silhouette(dataset_kmed, 'cluster', 'silhouette')
-        util.print_latex_statistics_clusters(dataset_kmed, 'cluster', [
-                                             'acc_x', 'acc_y', 'acc_z'], 'label')
+        util.print_latex_statistics_clusters(dataset_kmed, 'cluster', values, 'label')
 
     if FLAGS.mode == 'kmediods':
 
@@ -73,11 +75,11 @@ def main():
         k_values = range(2, 10)
         silhouette_values = []
         print('===== k medoids clustering =====')
-
+        values = ['hr_bpm', 'loc_speed']
         for k in k_values:
             print(f'k = {k}')
             dataset_cluster = clusteringNH.k_medoids_over_instances(copy.deepcopy(
-                dataset), ['acc_x', 'acc_y', 'acc_z'], k, 'default', 20, n_inits=10)
+                dataset), values, k, 'default', 20, n_inits=10)
             silhouette_score = dataset_cluster['silhouette'].mean()
             print(f'silhouette = {silhouette_score}')
             silhouette_values.append(silhouette_score)
@@ -91,13 +93,13 @@ def main():
         k = k_values[np.argmax(silhouette_values)]
         print(f'Highest K-Medoids silhouette score: k = {k}')
 
-        dataset_kmed = clusteringNH.k_medoids_over_instances(copy.deepcopy(dataset), [
-                                                             'acc_x', 'acc_y', 'acc_z'], k, 'default', 20, n_inits=50)
-        DataViz.plot_clusters_3d(dataset_kmed, [
-                                 'acc_x', 'acc_y', 'acc_z'], 'cluster', ['label'])
+        dataset_kmed = clusteringNH.k_medoids_over_instances(copy.deepcopy(dataset), values, k, 'default', 20, n_inits=50)
+        if len(values) == 2:
+            DataViz.plot_clusters_2d(dataset_kmed, values, 'cluster', ['label'])
+        else:
+            DataViz.plot_clusters_3d(dataset_kmed, values, 'cluster', ['label'])
         DataViz.plot_silhouette(dataset_kmed, 'cluster', 'silhouette')
-        util.print_latex_statistics_clusters(dataset_kmed, 'cluster', [
-                                             'acc_x', 'acc_y', 'acc_z'], 'label')
+        util.print_latex_statistics_clusters(dataset_kmed, 'cluster', values, 'label')
 
     # And the hierarchical clustering is the last one we try
     if FLAGS.mode == 'agglomerative':
@@ -136,17 +138,25 @@ def main():
         # And we select the outcome dataset of the knn clustering....
         clusteringNH = NonHierarchicalClustering()
 
-        dataset = clusteringNH.k_means_over_instances(dataset, ['acc_x', 'acc_y', 'acc_z'], FLAGS.k, 'default', 50, 50)
+        dataset = clusteringNH.k_means_over_instances(dataset, ['acc_x', 'acc_y', 'acc_z'], 7, 'default', 50, 50) # 7 kmeans barely better than kmediods 7
         dataset['acc_cluster'] = dataset['cluster']
-        dataset = clusteringNH.k_means_over_instances(dataset, ['mag_x', 'mag_y', 'mag_z'], FLAGS.k, 'default', 50, 50)
+        dataset = clusteringNH.k_means_over_instances(dataset, ['mag_x', 'mag_y', 'mag_z'], 2, 'default', 50, 50) # 2 kmediods barely better than kmeans 2
         dataset['mag_cluster'] = dataset['cluster']
-        dataset = clusteringNH.k_means_over_instances(dataset, ['gyr_x', 'gyr_y', 'gyr_z'], FLAGS.k, 'default', 50, 50)
+        dataset = clusteringNH.k_means_over_instances(dataset, ['gyr_x', 'gyr_y', 'gyr_z'], 4, 'default', 50, 50) # 4 kmeans
         dataset['gyr_cluster'] = dataset['cluster']
-        dataset = clusteringNH.k_means_over_instances(dataset, ['hr_bpm', 'loc_speed'], FLAGS.k, 'default', 50, 50)
+        print("Hello")
+        dataset = clusteringNH.k_means_over_instances(dataset, ['hr_bpm', 'loc_speed'], 2, 'default', 50, 50) # 2
         dataset['hr_speed_cluster'] = dataset['cluster']
+        silhouette_score = dataset['silhouette'].mean()
+        print("Silhouette score: {}".format(silhouette_score))
         del dataset['cluster']
         # print(dataset.columns)
-        # DataViz.plot_clusters_3d(dataset, ['acc_x', 'acc_y', 'acc_z'], 'cluster', ['label'])
+        DataViz.plot_clusters_3d(dataset, ['acc_x', 'acc_y', 'acc_z'], 'acc_cluster', ['label'])
+        DataViz.plot_clusters_3d(dataset, ['mag_x', 'mag_y', 'mag_z'], 'mag_cluster', ['label'])
+        DataViz.plot_clusters_3d(dataset, ['gyr_x', 'gyr_y', 'gyr_z'], 'gyr_cluster', ['label'])
+        DataViz.plot_clusters_2d(dataset, ['hr_bpm', 'loc_speed'], 'hr_speed_cluster', ['label'])
+
+
         # DataViz.plot_silhouette(dataset, 'cluster', 'silhouette')
         # util.print_latex_statistics_clusters(
         #     dataset, 'cluster', ['acc_x', 'acc_y', 'acc_z'], 'label')
