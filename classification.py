@@ -57,8 +57,8 @@ print('Test set length is: ', len(test_X.index))
 basic_features = ['acc_x','acc_y','acc_z','gyr_x','gyr_y','gyr_z','hr_bpm','mag_x','mag_y','mag_z', 'loc_speed']
 pca_features = ['pca_1','pca_2','pca_3','pca_4']
 time_features = [name for name in dataset.columns if '_temp_' in name]
-# freq_features = [name for name in dataset.columns if (('_freq' in name) or ('_pse' in name))]
-freq_features = [name for name in dataset.columns if '_freq' in name]
+freq_features = [name for name in dataset.columns if (('_freq' in name) or ('_pse' in name))]
+# freq_features = [name for name in dataset.columns if '_freq' in name]
 
 print('#basic features: ', len(basic_features))
 print('#PCA features: ', len(pca_features))
@@ -67,15 +67,21 @@ print('#frequency features: ', len(freq_features))
 # cluster_features = ['cluster']
 cluster_features = [name for name in dataset.columns if '_cluster' in name]
 print('#cluster features: ', len(cluster_features))
+
+
+
 features_after_chapter_3 = list(set().union(basic_features, pca_features))
 features_after_chapter_4 = list(set().union(basic_features, pca_features, time_features, freq_features))
-# features_after_chapter_5 = list(set().union(basic_features, pca_features, time_features, freq_features, cluster_features))
-features_after_chapter_5 = list(set().union(basic_features, pca_features, time_features, cluster_features))
+features_after_chapter_5 = list(set().union(basic_features, pca_features, time_features, freq_features, cluster_features))
+
+# features_after_chapter_5 = [name for name in features_after_chapter_5 if 'speed' not in name]
+# features_after_chapter_5 = list(set().union(basic_features, pca_features, time_features, cluster_features))
 
 
 # # First, let us consider the performance over a selection of features:
 
 fs = FeatureSelectionClassification()
+N_FORWARD_SELECTION = 50
 
 features, ordered_features, ordered_scores = fs.forward_selection(N_FORWARD_SELECTION,
                                                                   train_X[features_after_chapter_5],
@@ -87,9 +93,11 @@ features, ordered_features, ordered_scores = fs.forward_selection(N_FORWARD_SELE
 DataViz.plot_xy(x=[range(1, N_FORWARD_SELECTION+1)], y=[ordered_scores],
                 xlabel='number of features', ylabel='accuracy')
 
-
+print("Features:")
 print(features)
 print(ordered_features)
+print(ordered_scores)
+print("Best score: {}".format(ordered_scores[-1]))
 # based on python2 features, slightly different.
 # selected_features = ['acc_phone_y_freq_0.0_Hz_ws_40', 'press_phone_pressure_temp_mean_ws_120', 'gyr_phone_x_temp_std_ws_120',
 #                      'mag_watch_y_pse', 'mag_phone_z_max_freq', 'gyr_watch_y_freq_weighted', 'gyr_phone_y_freq_1.0_Hz_ws_40',
@@ -98,61 +106,75 @@ print(ordered_features)
 selected_features = ordered_features
 
 
-# # # Let us first study the impact of regularization and model complexity: does regularization prevent overfitting?
+# # Let us first study the impact of regularization and model complexity: does regularization prevent overfitting?
 
 learner = ClassificationAlgorithms()
 eval = ClassificationEvaluation()
 start = time.time()
 
 
-reg_parameters = [0.0001, 0.001, 0.01, 0.1, 1, 10]
-performance_training = []
-performance_test = []
+
+
+# reg_parameters = [0.0001, 0.001, 0.01, 0.1, 1, 10]
+# performance_training = []
+# performance_test = []
 ## Due to runtime constraints we run the experiment 3 times, yet if you want even more robust data one should increase the repetitions.
-N_REPEATS_NN = 3
+# N_REPEATS_NN = 3
 
 
-for reg_param in reg_parameters:
-    performance_tr = 0
-    performance_te = 0
-    for i in range(0, N_REPEATS_NN):
+# for reg_param in reg_parameters:
+#     print("Reg param: {}".format(reg_param))
+#     performance_tr = 0
+#     performance_te = 0
+#     for i in range(0, N_REPEATS_NN):
 
-        class_train_y, class_test_y, class_train_prob_y, class_test_prob_y = learner.feedforward_neural_network(
-            train_X, train_y,
-            test_X, hidden_layer_sizes=(250, ), alpha=reg_param, max_iter=500,
-            gridsearch=False
-        )
+#         class_train_y, class_test_y, class_train_prob_y, class_test_prob_y = learner.feedforward_neural_network(
+#             train_X, train_y,
+#             test_X, hidden_layer_sizes=(250, ), alpha=reg_param, max_iter=500,
+#             gridsearch=False
+#         )
 
-        performance_tr += eval.accuracy(train_y, class_train_y)
-        performance_te += eval.accuracy(test_y, class_test_y)
-    performance_training.append(performance_tr/N_REPEATS_NN)
-    performance_test.append(performance_te/N_REPEATS_NN)
-DataViz.plot_xy(x=[reg_parameters, reg_parameters], y=[performance_training, performance_test], method='semilogx',
-                xlabel='regularization parameter value', ylabel='accuracy', ylim=[0.95, 1.01],
-                names=['training', 'test'], line_styles=['r-', 'b:'])
+#         performance_tr += eval.accuracy(train_y, class_train_y)
+#         performance_te += eval.accuracy(test_y, class_test_y)
+#     performance_training.append(performance_tr/N_REPEATS_NN)
+#     performance_test.append(performance_te/N_REPEATS_NN)
+# DataViz.plot_xy(x=[reg_parameters, reg_parameters], y=[performance_training, performance_test], method='semilogx',
+#                 xlabel='regularization parameter value', ylabel='accuracy', ylim=[0.95, 1.01],
+#                 names=['training', 'test'], line_styles=['r-', 'b:'])
+
+
+
+
 
 #Second, let us consider the influence of certain parameter settings for the tree model. (very related to the
 #regularization) and study the impact on performance.
 
-leaf_settings = [1,2,5,10]
-performance_training = []
-performance_test = []
+# print("First part done!")
 
-for no_points_leaf in leaf_settings:
+# leaf_settings = [1,2,5,10]
+# performance_training = []
+# performance_test = []
 
-    class_train_y, class_test_y, class_train_prob_y, class_test_prob_y = learner.decision_tree(
-        train_X[selected_features], train_y, test_X[selected_features], min_samples_leaf=no_points_leaf,
-        gridsearch=False, print_model_details=False)
+# for no_points_leaf in leaf_settings:
+#     print("Leafs: {}".format(no_points_leaf))
+#     class_train_y, class_test_y, class_train_prob_y, class_test_prob_y = learner.decision_tree(
+#         train_X[selected_features], train_y, test_X[selected_features], min_samples_leaf=no_points_leaf,
+#         gridsearch=False, print_model_details=False)
 
-    performance_training.append(eval.accuracy(train_y, class_train_y))
-    performance_test.append(eval.accuracy(test_y, class_test_y))
+#     performance_training.append(eval.accuracy(train_y, class_train_y))
+#     performance_test.append(eval.accuracy(test_y, class_test_y))
 
-DataViz.plot_xy(x=[leaf_settings, leaf_settings], y=[performance_training, performance_test],
-                xlabel='minimum number of points per leaf', ylabel='accuracy',
-                names=['training', 'test'], line_styles=['r-', 'b:'])
+# DataViz.plot_xy(x=[leaf_settings, leaf_settings], y=[performance_training, performance_test],
+#                 xlabel='minimum number of points per leaf', ylabel='accuracy',
+#                 names=['training', 'test'], line_styles=['r-', 'b:'])
+
+
+# print("Second part done!")
 
 # So yes, it is important :) Therefore we perform grid searches over the most important parameters, and do so by means
 # of cross validation upon the training set.
+
+
 
 possible_feature_sets = [basic_features, features_after_chapter_3, features_after_chapter_4, features_after_chapter_5, selected_features]
 feature_names = ['initial set', 'Chapter 3', 'Chapter 4', 'Chapter 5', 'Selected features']
@@ -246,14 +268,14 @@ DataViz.plot_performances_classification(['NN', 'RF','SVM', 'KNN', 'DT', 'NB'], 
 # # And we study two promising ones in more detail. First, let us consider the decision tree, which works best with the
 # # selected features.
 
-class_train_y, class_test_y, class_train_prob_y, class_test_prob_y = learner.decision_tree(train_X[selected_features], train_y, test_X[selected_features],
-                                                                                           gridsearch=True,
-                                                                                           print_model_details=True, export_tree_path=EXPORT_TREE_PATH)
+# class_train_y, class_test_y, class_train_prob_y, class_test_prob_y = learner.decision_tree(train_X[selected_features], train_y, test_X[selected_features],
+#                                                                                            gridsearch=True,
+#                                                                                            print_model_details=True, export_tree_path=EXPORT_TREE_PATH)
 
-class_train_y, class_test_y, class_train_prob_y, class_test_prob_y = learner.random_forest(
-    train_X[selected_features], train_y, test_X[selected_features],
-    gridsearch=True, print_model_details=True)
+# class_train_y, class_test_y, class_train_prob_y, class_test_prob_y = learner.random_forest(
+#     train_X[selected_features], train_y, test_X[selected_features],
+#     gridsearch=True, print_model_details=True)
 
-test_cm = eval.confusion_matrix(test_y, class_test_y, class_train_prob_y.columns)
+# test_cm = eval.confusion_matrix(test_y, class_test_y, class_train_prob_y.columns)
 
-DataViz.plot_confusion_matrix(test_cm, class_train_prob_y.columns, normalize=False)
+# DataViz.plot_confusion_matrix(test_cm, class_train_prob_y.columns, normalize=False)
