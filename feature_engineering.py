@@ -85,7 +85,6 @@ def main():
         dataset = NumAbs.abstract_numerical(dataset, selected_predictor_cols, ws, 'mean')
         dataset = NumAbs.abstract_numerical(dataset, selected_predictor_cols, ws, 'std')
         dataset = NumAbs.abstract_numerical(dataset, selected_predictor_cols, ws, 'slope')
-        # TODO: Add your own aggregation methods here
 
         DataViz.plot_dataset(dataset, ['acc_x','gyr_x','hr_bpm','loc_speed','mag_x','pca_1', 'label'], ['like'] * 7, ['line'] * 6 + ['points'])
 
@@ -97,10 +96,8 @@ def main():
 
         periodic_predictor_cols = ['acc_x','acc_y','acc_z','gyr_x','gyr_y','gyr_z','loc_speed','mag_x','mag_y','mag_z']
 
-
-
         dataset = FreqAbs.abstract_frequency(copy.deepcopy(dataset), periodic_predictor_cols, int(float(10000)/milliseconds_per_instance), fs)
-
+        DataViz.plot_dataset(dataset,['acc_x_max_freq', 'acc_x_freq_weighted','acc_x_pse', 'label'], ['like'] * 4, ['line'] * 3 + ['points'])
 
         # Now we only take a certain percentage of overlap in the windows, otherwise our training examples will be too much alike.
 

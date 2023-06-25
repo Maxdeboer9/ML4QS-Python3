@@ -37,6 +37,17 @@ def read_dataset():
     return dataset
 
 
+def calculate_activity(predictions, truth):
+    active = ['labelwalking', 'labelcycling', 'labeljogging']
+    predicted_scores = [1 if label in active else 0 for label in predictions]
+    true_scores = [1 if label in active else 0 for label in truth]
+    pred_activity = sum(predicted_scores) / len(predicted_scores) * 100
+    real_activity = sum(true_scores) / len(true_scores) * 100
+    print("The predicted activity was {}%".format(pred_activity))
+    print("The acutal activity was {}%".format(real_activity))
+    print("That's a difference of {}%\n".format(abs(pred_activity - real_activity)))
+
+
 def main():
     N_KCV_REPEATS = 10
     dataset = read_dataset()
@@ -64,13 +75,7 @@ def main():
     cluster_features = [name for name in dataset.columns if '_cluster' in name]
     print('#cluster features: ', len(cluster_features))
 
-    # features_after_chapter_3 = list(set().union(basic_features, pca_features))
-    # features_after_chapter_4 = list(set().union(basic_features, pca_features, time_features, freq_features))
     features_after_chapter_5 = list(set().union(basic_features, pca_features, time_features, freq_features, cluster_features))
-    # old_selected_features = ['loc_speed_freq_0.0_Hz_ws_20', 'loc_speed_temp_mean_ws_60', 'hr_bpm_temp_mean_ws_60', 'hr_bpm',
-    #                      'acc_x_temp_std_ws_60', 'pca_1_temp_std_ws_60', 'gyr_z_freq_1.0_Hz_ws_20', 'acc_y_freq_0.7_Hz_ws_20',
-    #                      'acc_z_freq_0.7_Hz_ws_20', 'gyr_y_freq_0.7_Hz_ws_20', 'gyr_x_max_freq', 'acc_z_freq_0.9_Hz_ws_20',
-    #                      'gyr_x_freq_0.5_Hz_ws_20', 'acc_y_freq_0.5_Hz_ws_20', 'loc_speed_max_freq']
 
     fs = FeatureSelectionClassification()
     N_FORWARD_SELECTION = 15
@@ -108,8 +113,6 @@ def main():
     learner = ClassificationAlgorithms()
     eval = ClassificationEvaluation()
     start = time.time()
-
-    # selected_features = ordered_features
 
     possible_feature_sets = [features_after_chapter_5, tree_features, forest_features]
     feature_names = ['Chapter 5', 'Decision Tree Features', 'Random Forest Features']
@@ -163,16 +166,21 @@ def main():
 
     test_cm = eval.confusion_matrix(test_y, class_test_y, class_train_prob_y.columns)
 
+    print("Decision Tree activity scores:")
+    calculate_activity(class_test_y, test_y['class'])
+
+
     DataViz.plot_confusion_matrix(test_cm, class_train_prob_y.columns, normalize=False)
 
     class_train_y, class_test_y, class_train_prob_y, class_test_prob_y = learner.random_forest(
         train_X[forest_features], train_y, test_X[forest_features],
         gridsearch=True, print_model_details=True)
 
+    print("Random Forest activity scores:")
+    calculate_activity(class_test_y, test_y['class'])
+
     total_test_y = list(test_y['class']) * (N_KCV_REPEATS + 1)
     total_class_test_y = np.concatenate([total_class_test_y, class_test_y])
-    # print(total_test_y)
-    # print(total_class_test_y)
     test_cm = eval.confusion_matrix(total_test_y, total_class_test_y, class_train_prob_y.columns)
 
     DataViz.plot_confusion_matrix(test_cm, class_train_prob_y.columns, normalize=False)
